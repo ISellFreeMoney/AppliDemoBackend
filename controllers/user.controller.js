@@ -60,33 +60,29 @@ module.exports.deleteUser = async (req, res) => {
 };
 
 module.exports.follow = async (req, res) => {
-  if (!ObjectID.isValid(req.params.is) || !ObjectID.isValid(req.body.idToFollow)) {
-    return res.status(400).send(`ID Inconnu: ${req.params.id}`);
+  if (
+    !ObjectID.isValid(req.params.id)
+    || !ObjectID.isValid(req.body.idToFollow)) {
+    return res.status(400).send(`ID zi Inconnu: ${req.params.id}`);
   }
 
   try {
-    // Ajouter a la liste des followers
-    await UserModel.findByIdAndUpdate(req.params.id, {
-      $addToSet: {
-        following: req.body.idToFollow
-      }
-    }, {
-      new: true,
-      upsert: true
-    }, (err, docs) => {
-      if (!err) return res.status(201).json(docs);
-      return res.status(400).json(err);
-    });
+    // add to the follower list
+    await UserModel.findByIdAndUpdate(
+      req.params.id,
+      { $addToSet: { following: req.body.idToFollow } },
+      { new: true, upsert: true }
+        .then((data) => res.send(data))
+        .catch((err) => res.status(500).send({ message: err }))
+    ),
 
-    // Ajouter a la liste des following
+    // add to following list
     await UserModel.findByIdAndUpdate(
       req.body.idToFollow,
       { $addToSet: { followers: req.params.id } },
-      { new: true, upsert: true },
-      (err, docs) => {
-        if (!err) return res.status(201).json(docs);
-        return res.status(400).json(err);
-      }
+      { new: true, upsert: true }
+        .then((data) => res.send(data))
+        .catch((err) => res.status(500).send({ message: err }))
     );
   }
   catch (err) {
@@ -95,15 +91,15 @@ module.exports.follow = async (req, res) => {
 };
 
 module.exports.unfollow = async (req, res) => {
-  if (!ObjectID.isValid(req.params.is) || !ObjectID.isValid(req.body.idToFollow)) {
-    return res.status(400).send(`ID Inconnu: ${req.params.id}`);
-  }
+  if (
+    !ObjectID.isValid(req.params.id)
+ || !ObjectID.isValid(req.body.idToUnFollow)) return res.status(400).send(`ID Inconnu: ${req.params.id}`);
 
   try {
     // Ajouter a la liste des followers
     await UserModel.findByIdAndUpdate(req.params.id, {
       $pull: {
-        following: req.body.idToUnFollow
+        following: req.body.idToUnfollow
       }
     }, {
       new: true,
